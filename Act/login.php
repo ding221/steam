@@ -1,16 +1,19 @@
 <?php
 namespace Act;
 
-use phpseclib;
-use Lib;
-class loginController{
+use Lib\Mail;
+use Monolog\Handler\AbstractHandler;
+use Monolog\Logger;
+use phpseclib\Crypt\RSA;
+use phpseclib\Math\BigInteger;
+
+class login{
 
     protected static $con_email_times = 0;
     protected static $receive_email_times = 0;
 
 
     public static function loginAction(){
-
         global $cfg;
         $login_url = 'https://store.steampowered.com/login/getrsakey/';//post
         if (!isset($cfg['username']) && !$cfg['username'])
@@ -23,11 +26,11 @@ class loginController{
         global $cfg;
         if (!count($data)){
             $rsa_result = json_decode($login_info);
-            $rsa = new phpseclib\Crypt\RSA();
-            $rsa->setEncryptionMode(phpseclib\Crypt\RSA::ENCRYPTION_PKCS1);
+            $rsa = new RSA();
+            $rsa->setEncryptionMode(RSA::ENCRYPTION_PKCS1);
             $key = [
-                'n' => new phpseclib\Math\BigInteger($rsa_result->publickey_mod, 16),
-                'e' => new phpseclib\Math\BigInteger($rsa_result->publickey_exp, 16), // Fixed base :)
+                'n' => new BigInteger($rsa_result->publickey_mod, 16),
+                'e' => new BigInteger($rsa_result->publickey_exp, 16), // Fixed base :)
             ];
             $rsa->loadKey($key);
             $password = base64_encode($rsa->encrypt($cfg['password'])); // Steam uses Base64_Encode()
@@ -47,9 +50,7 @@ class loginController{
 
         $do_logion_url = 'https://store.steampowered.com/login/dologin/';//post
         $login = httpsPost($do_logion_url, $data);//先请求一次，让steam发送验证码
-        println($login);
-        $login = json_decode($login);
-
+    //println($login);
         $login_result = json_decode($login);
         if ($login_result->success) {
             if ($login_result->login_complete) {
@@ -57,8 +58,11 @@ class loginController{
             }
         } else {
             if ($login_result->requires_twofactor) {
+                println("Receive E-mail and Captcha");
                 $body = self::receiveEmail();
-                $captcha = self::getCaptcha($body);
+                if ($body)
+                    $captcha = self::getCaptcha($body);
+                
                 $data['twofactorcode'] = $captcha;
 
                 if ($captcha != '') {
@@ -74,36 +78,29 @@ class loginController{
                 }
             }
         }
-
-        //if ($login['success'] == false) {
-        //    $body = self::receiveEmail();
-        //    $captcha = self::getCaptcha($body);
-        //    $data['twofactorcode'] = $captcha;
-        //    //self::doLogin($login_info);
-        //} else {
-        //    //其他业务处理
-        //}
     }
 
-    protected static function receiveEmail(){
+    public static function receiveEmail(){
         global $cfg;
-        $host = $cfg['email_pop3'];
+        $host = $cfg['email_host'];
         $user = $cfg['email'];
         $pass = $cfg['email_pwd'];
         $port = $cfg['port'];
         $ssl = $cfg['ssl'];
         $stmp_type = $cfg['stmp_type'];
 
-        $mail = new Lib\Mail($user, $pass, $host, $port, $ssl, $stmp_type);
+        $mail = new Mail($user, $pass, $host, $port, $ssl, $stmp_type);
         $conn = $mail->connect();
         if (!$conn){
             println("Connect to email server failed.Try to reconnect.");
             self::$con_email_times++;
-            if (self::$con_email_times >3){
+            println(self::$con_email_times);
+            if (self::$con_email_times > 3){
                 println("Connect to email server failed.");
-                return false;
+                exit();
+            } else {
+                self::receiveEmail();
             }
-            self::receiveEmail();
         }
         $img = '/img';
         $savePath = 'upload/' . date('Ym/');
@@ -135,7 +132,7 @@ class loginController{
             //}
             $mail->close_mailbox();
         }
-        if ($body){
+        if (isset($body) && $body){
             return $body;
         } else {
             self::receiveEmail();

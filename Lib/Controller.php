@@ -16,7 +16,6 @@ class Controller {
         $c .= isset($_GET['c']) ? $_GET['c'] : "login"; //url提供类名字的变量名
         $a = isset($_GET['a']) ? $_GET['a'] : "login"; //url提供方法名字的变量名
 
-        $c .= "Controller";
         $a .= 'Action';
         if( class_exists($c) && method_exists($c, $a) ) {
             $o = new $c();

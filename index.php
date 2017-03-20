@@ -8,6 +8,7 @@ define('FUNC', APP . 'common' . DIRECTORY_SEPARATOR);
 define('LIB', APP . 'lib' . DIRECTORY_SEPARATOR);
 define('ACT', APP . 'act' . DIRECTORY_SEPARATOR);
 define('CFG', APP . 'conf' . DIRECTORY_SEPARATOR);
+define('LOG', APP . 'log' . DIRECTORY_SEPARATOR);
 set_time_limit(0);
 try{
     require_once CFG . 'cfg.php';
@@ -17,8 +18,23 @@ try{
 
     spl_autoload_register("\\AutoLoading\\load::autoload");
 
-    lib\Controller::run();
+    //lib\Controller::run();
+
+    $host = $cfg['email_host'];
+    $user = $cfg['email'];
+    $pass = $cfg['email_pwd'];
+    $port = $cfg['port'];
+    $ssl = $cfg['ssl'];
+    $stmp_type = $cfg['stmp_type'];
+
+    $mail = new \Lib\Mail($user, $pass, $host, $port, $ssl, $stmp_type);
+    $conn = $mail->connect();
+    echo 5/0;
+    var_dump($mail);
+    var_dump($conn);
+
 } catch (Exception $e){
-    echo 'Error: ' . $e->getMessage();
+    echo 'Error: ' . $e->getCode();
+    echo 'Line: ' . $e->getLine();
 }
 
