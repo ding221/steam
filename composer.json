@@ -1,14 +1,20 @@
 {
-    "require": {
-        "phpseclib/phpseclib": "~2.0",
-        "monolog/monolog": "^1.22"
-    },
-    "repositories": {
-        "packagist": {
-            "type": "composer",
-            "url": "https://packagist.phpcomposer.com"
-        }
+  "require": {
+    "phpseclib/phpseclib": "~2.0",
+    "monolog/monolog": "^1.22"
+  },
+  "repositories": {
+    "packagist": {
+      "type": "composer",
+      "url": "https://packagist.phpcomposer.com"
     }
+  },
+  "autoload": {
+      "files": [
+        "common/func.php"
+      ]
+  }
 
 
 }
+

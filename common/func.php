@@ -5,7 +5,7 @@
  *
  * @param string    $url
  * @param int       $timeout
- * @method       get
+ * @method get
  * @return mixed
  */
 function curlGet($url, $timeout = 60) {
@@ -45,6 +45,31 @@ function httpsPost($url = '', $data = [], $time = 60){
     }
     curl_close($ch);
     return $result;
+}
+
+function getCookie($website_url){
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $website_url);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $results = curl_exec($ch);
+    curl_close($ch);
+    preg_match_all('|Set-Cookie: (.*);|U', $results, $arr);
+    return $arr[1];
+}
+
+function get_login_info(){
+    if (!file_exists(COOKIE))
+        return false;
+    $data = file_get_contents(COOKIE);
+    $cookie = json_decode($data, 1);
+    if(isset($cookie['steamid'])){
+        return $cookie;
+    } else{
+        return false;
+    }
+
 }
 
 function println($str) {

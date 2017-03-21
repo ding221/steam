@@ -9,16 +9,19 @@ class Mail//receive
     public $marubox='';
 
     //function Mail($username, $password, $host='', $port='', $ssl = false) //Constructure
-    function __construct($username, $password, $host='', $port='', $ssl = false) //Constructure
+    function __construct($username, $password, $host='', $port='', $ssl = false, $type = '') //Constructure
     {
         if($port=='') {
             return false;
         }
-
+        $strConnect ='{'.$host.':'.$port;
+        if ($type) {
+            $strConnect .= '/' . $type;
+        }
         if ($ssl) {
-            $strConnect='{'.$host.':'.$port. '/ssl}INBOX';
+            $strConnect .= '/ssl}INBOX';
         } else {
-            $strConnect='{'.$host.':'.$port. '}INBOX';
+            $strConnect .= '}INBOX';
         }
 
         $this->server            =   $strConnect;

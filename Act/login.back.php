@@ -5,25 +5,19 @@ use Lib\Mail;
 use phpseclib\Crypt\RSA;
 use phpseclib\Math\BigInteger;
 
-class Login{
+class login{
 
     protected static $con_email_times = 0;
     protected static $receive_email_times = 0;
 
 
-    public static function login(){
-        $cookie = get_login_info();
-        if (!$cookie){
-            global $cfg;
-            $login_url = 'https://store.steampowered.com/login/getrsakey/';//post
-            if (!isset($cfg['username']) && !$cfg['username'])
-                return false;
-            $login = httpsPost($login_url, $cfg);
-            self::doLogin($login);
-        } else {
-            header("Location: index.php?c=Item&a=item");
-            //return Item::getInventory(['steamid' => $cookie['steamid']], $appid = 570);
-        }
+    public static function loginAction(){
+        global $cfg;
+        $login_url = 'https://store.steampowered.com/login/getrsakey/';//post
+        if (!isset($cfg['username']) && !$cfg['username'])
+            return false;
+        $login = httpsPost($login_url, $cfg);
+        self::doLogin($login);
     }
     
     protected static function doLogin($login_info = null, $data = []){
@@ -34,14 +28,14 @@ class Login{
             $rsa->setEncryptionMode(RSA::ENCRYPTION_PKCS1);
             $key = [
                 'n' => new BigInteger($rsa_result->publickey_mod, 16),
-                'e' => new BigInteger($rsa_result->publickey_exp, 16), //Fixed base :)
+                'e' => new BigInteger($rsa_result->publickey_exp, 16), // Fixed base :)
             ];
             $rsa->loadKey($key);
-            $password = base64_encode($rsa->encrypt($cfg['password'])); //Steam uses Base64_Encode()
+            $password = base64_encode($rsa->encrypt($cfg['password'])); // Steam uses Base64_Encode()
             $data = [
                 'username' => $cfg['username'],
                 'password' => $password,
-                'twofactorcode' => 'ckdv3',//邮箱or令牌验证码
+                'twofactorcode' => '',//邮箱验证码
                 'emailauth' => '',
                 'loginfriendlyname' => '',
                 'captchagid' => -1,
@@ -54,7 +48,7 @@ class Login{
 
         $do_logion_url = 'https://store.steampowered.com/login/dologin/';//post
         $login = httpsPost($do_logion_url, $data);//先请求一次，让steam发送验证码
-
+println($login);
         $login_result = json_decode($login);
         if ($login_result->success) {
             //{"success":true,"requires_twofactor":false,"login_complete":true,
@@ -70,14 +64,9 @@ class Login{
                     'token_secure' => $login_result->transfer_parameters->token_secure,
                 ];
                 println('Login success!');
-                $web_url = 'http://store.steampowered.com/'; //steam主页
-                $cookie = getCookie($web_url);
-                $cookie = array_merge($cookie, $transfer_parameters);
-                file_put_contents(COOKIE, json_encode($cookie));
+
                 //$notification_url = 'http://steamcommunity.com/actions/GetNotificationCounts';
                 //curl_setopt($ch, CURLOPT_COOKIE, $cookie);
-                return Item::getInventory(['steamid' => $transfer_parameters['steamid']], $appid = 730);
-
             }
         } else {
             if ($login_result->requires_twofactor) {
@@ -88,6 +77,12 @@ class Login{
                     if ($captcha)
                         $data['twofactorcode'] = $captcha;
                 }
+
+                //if ($captcha != '') {
+                //    self::doLogin('', $data);
+                //} else {
+                //
+                //}
             } else {
                 if (isset($login_result->message)) {
                     println($login_result->message);
@@ -111,36 +106,36 @@ class Login{
         $ssl = $cfg['ssl'];
         $stmp_type = $cfg['stmp_type'];
 
-        $mail = new Mail($user, $pass, $host, '993', true, 'imap');
+        $mail = new Mail($user, $pass, $host, $port, $ssl, $stmp_type);
         $conn = $mail->connect();
         if (!$conn){
-            println("Connect to email server failed.Try to reconnect.");
-            self::$con_email_times++;
-            if (self::$con_email_times > 3){
-                println("Connect to email server failed.Try to log in again");
-                return false;
-            } else {
-                sleep(30);//等待30s 避免服务器关闭连接
-                return self::receiveEmail();
-            }
-        } else {
-            $img = '/img';
-            $savePath = 'upload/' . date('Ym/');
-            if(!file_exists($savePath)) {
-                @mkdir($savePath, 0777, true);
-                touch($savePath . 'index.html');
-            }
-            $savePath = dirname($savePath) . '/';
-            $tot = $mail->getTotalMails();//总共收到邮件
+            //println("Connect to email server failed.Try to reconnect.");
+            //self::$con_email_times++;
+            //if (self::$con_email_times > 3){
+                println("Connect to email server failed.");
+            return false;
+            //    exit();
+            //} else {
+            //    return self::receiveEmail();
+            //}
+        }
+        $img = '/img';
+        $savePath = 'upload/' . date('Ym/');
+        if(!file_exists($savePath)) {
+            @mkdir($savePath, 0777, true);
+            touch($savePath . 'index.html');
+        }
+        $savePath = dirname($savePath) . '/';
+        $tot = $mail->getTotalMails();//总共收到邮件
 
-            if($tot < 1){
-                echo '没有邮件';
-                die();
-            } else {
-                $res = [];
-                //for($i=$tot;$i>0;$i--){
-                $i = 1;
-                $head = $mail->getHeaders($i);
+        if($tot < 1){
+            println("Inbox no mail, Wait 10 seconds to query");
+            //sleep(10);
+            //return self::receiveEmail();
+        } else {
+            //for($i=$tot;$i>0;$i--){
+                //$head = $mail->getHeaders($i);//获取邮件头部信息
+                $i = 1;//验证邮件默认为第一封邮件
                 $files = $mail->GetAttach($i, $savePath);//获取邮件附件，返回的邮件附件信息数组
                 $imageList = [];
                 foreach ($files as $k => $file){
@@ -149,12 +144,16 @@ class Login{
                     }
                 }
                 $body = $mail->getBody($i, $img, $imageList);
-                //$res['mail'][]=array('body'=>$body);
-                //}
-                $mail->close_mailbox();
-                return $body;
-            }
+
+            //}
+            $mail->close_mailbox();
         }
+        if (isset($body) && $body){
+            return $body;
+        } else {
+            self::receiveEmail();
+        }
+
     }
 
     protected static function getCaptcha($body){
