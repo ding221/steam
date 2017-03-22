@@ -12,16 +12,16 @@ class item{
 
     static public function item(){
         $cookie = get_login_info();
-        return self::getInventory(['steamid' => $cookie['steamid']], $appid = 570);
+        return self::getInventory($cookie['steamid'], $appid = 570);
     }
     
-    static public function getInventory($user = [], $appid = ''){
-        if (count($user) < 1) {
+    static public function getInventory($steam_id, $appid){
+        if (!$steam_id) {
             return false;   
         }
-        if (isset($user['steamid'])){
-            $steam = new Steam($user);
-            $Inventory_url = $steam->getInventory($appid);
+        if (isset($steam_id) && $steam_id){
+            $steam = new Steam($steam_id);
+            $Inventory_url = $steam->getInventory($appid, $language = 'zh');
         } else {
             println('Please Login');
             return false;

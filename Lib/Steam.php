@@ -7,20 +7,13 @@ class Steam {
     protected $country;
     protected $currency;
 
-    public function __construct($user)
+    public function __construct($steam_id)
     {
-        if (isset($user['steamid']) && $user['steamid']) {
-            $this->g_steamID = $user['steamid'];
+        if ($steam_id) {
+            $this->g_steamID = $steam_id;
         } else {
             return false;
         }
-        
-        if (isset($user['country']) && $user['country'])
-            $this->country = $user['country'];
-
-        if (isset($user['language']) && $user['language'])
-            $this->setLanguage($user['language']);
-
     }
     /**
      * 设置为steam的语言
@@ -83,11 +76,11 @@ class Steam {
      * @param string $language
      * @return string
      */
-    public function getInventory($game_id = 730, $language = ''){//730->csgo  570->dota
-        $language = isset($language) && $language != '' ? $language : $this->language;
+    public function getInventory($game_id, $language = 'en'){//730->csgo  570->dota
+        $this->setLanguage($language);
         //$url2 = 'http://steamcommunity.com/inventory/76561198003709290/730/2?l=schinese&count=75';
         return $url = 'http://steamcommunity.com/inventory/' .
-            $this->g_steamID . '/' . $game_id . '/2?l='. $language .'&count=75';
+            $this->g_steamID . '/' . $game_id . '/2?l='. $this->language .'&count=75';
     }
 
     /**

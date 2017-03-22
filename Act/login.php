@@ -18,11 +18,10 @@ class Login{
             $login_url = 'https://store.steampowered.com/login/getrsakey/';//post
             if (!isset($cfg['username']) && !$cfg['username'])
                 return false;
-            $login = httpsPost($login_url, $cfg);
+            $login = https_post($login_url, $cfg);
             self::doLogin($login);
         } else {
-            header("Location: index.php?c=Item&a=item");
-            //return Item::getInventory(['steamid' => $cookie['steamid']], $appid = 570);
+
         }
     }
     
@@ -41,7 +40,7 @@ class Login{
             $data = [
                 'username' => $cfg['username'],
                 'password' => $password,
-                'twofactorcode' => 'ckdv3',//邮箱or令牌验证码
+                'twofactorcode' => '9x6r7',//邮箱or令牌验证码
                 'emailauth' => '',
                 'loginfriendlyname' => '',
                 'captchagid' => -1,
@@ -53,13 +52,14 @@ class Login{
         }
 
         $do_logion_url = 'https://store.steampowered.com/login/dologin/';//post
-        $login = httpsPost($do_logion_url, $data);//先请求一次，让steam发送验证码
+        $login = https_post($do_logion_url, $data);//先请求一次，让steam发送验证码
 
         $login_result = json_decode($login);
         if ($login_result->success) {
             //{"success":true,"requires_twofactor":false,"login_complete":true,
             //"transfer_urls":["https:\/\/steamcommunity.com\/login\/transfer","https:\/\/help.steampowered.com\/login\/transfer"],
-            //"transfer_parameters":{"steamid":"76561198138552821","token":"1F8EB0566BF76A734B378061DA2EAFDCDCAC54AB","auth":"c18eab7dd3805f7c955ebf9442858a41","remember_login":false,"webcookie":"84246A4FC0ADBA1717718C1A2AC75DC4E2E9D12E","token_secure":"97F7544C456205FEB47FDBA69F72FECEE8D1639D"}}
+            //"transfer_parameters":{"steamid":"76561198138552821","token":"1F8EB0566BF76A734B378061DA2EAFDCDCAC54AB","auth":"c18eab7dd3805f7c955ebf9442858a41",
+            //"remember_login":false,"webcookie":"84246A4FC0ADBA1717718C1A2AC75DC4E2E9D12E","token_secure":"97F7544C456205FEB47FDBA69F72FECEE8D1639D"}}
             if ($login_result->login_complete) {
                 $transfer_parameters = [
                     'steamid' => $login_result->transfer_parameters->steamid,
@@ -70,13 +70,15 @@ class Login{
                     'token_secure' => $login_result->transfer_parameters->token_secure,
                 ];
                 println('Login success!');
-                $web_url = 'http://store.steampowered.com/'; //steam主页
-                $cookie = getCookie($web_url);
-                $cookie = array_merge($cookie, $transfer_parameters);
+                $web_url = 'http://steamcommunity.com/profiles/' . $login_result->transfer_parameters->steamid .'/home';
+                $cookie = get_cookie($web_url);
+                global $cookie_info;
+                global $userinfo;
+                $cookie_info = join(';', $cookie);//fruit=apple;colour=red
+                $userinfo = array_merge($cookie, $transfer_parameters);
                 file_put_contents(COOKIE, json_encode($cookie));
-                //$notification_url = 'http://steamcommunity.com/actions/GetNotificationCounts';
-                //curl_setopt($ch, CURLOPT_COOKIE, $cookie);
-                return Item::getInventory(['steamid' => $transfer_parameters['steamid']], $appid = 730);
+                return ;
+                //redirect('index.php?c=Item&a=item');
 
             }
         } else {

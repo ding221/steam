@@ -8,11 +8,16 @@
  * @method get
  * @return mixed
  */
-function curlGet($url, $timeout = 60) {
+function curl_get($url, $timeout = 60) {
     $curl = curl_init();
     curl_setopt($curl, CURLOPT_URL, $url);
     curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
     curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);//CURL请求https
+    //携带cookie访问
+    global $cookie_info;
+    if ($cookie_info != '')
+        curl_setopt($curl, CURLOPT_COOKIE, $cookie_info);
+
     curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
     $result = curl_exec($curl);
     if (curl_errno($curl)) {
@@ -30,13 +35,18 @@ function curlGet($url, $timeout = 60) {
  * @params  time    int   过期时间
  * return  mixed
  */
-function httpsPost($url = '', $data = [], $time = 60){
+function https_post($url = '', $data = [], $time = 60){
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_POST, TRUE);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($ch, CURLOPT_URL, $url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-//curl_setopt($ch, CURLOPT_HTTPHEADER, $httpheader);
+
+    //携带cookie访问
+    global $cookie_info;
+    if ($cookie_info != '')
+        curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
+
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
     curl_setopt($ch, CURLOPT_TIMEOUT, $time);
     $result = curl_exec($ch);
@@ -47,7 +57,7 @@ function httpsPost($url = '', $data = [], $time = 60){
     return $result;
 }
 
-function getCookie($website_url){
+function get_cookie($website_url){
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $website_url);
     curl_setopt($ch, CURLOPT_HEADER, true);
@@ -56,11 +66,17 @@ function getCookie($website_url){
     $results = curl_exec($ch);
     curl_close($ch);
     preg_match_all('|Set-Cookie: (.*);|U', $results, $arr);
-    return $arr[1];
+    preg_match_all('|Cookie: (.*);|U', $results, $arr2);
+    //return $arr[1];
+    return $arr[1] + $arr2[1];
 }
 
 function get_login_info(){
     if (!file_exists(COOKIE))
+        return false;
+
+    $time = filemtime(COOKIE);
+    if (($time + 3600 * 6) < time())
         return false;
     $data = file_get_contents(COOKIE);
     $cookie = json_decode($data, 1);
@@ -74,6 +90,10 @@ function get_login_info(){
 
 function println($str) {
     print("$str\n");
+}
+
+function redirect($url){
+    header("Location: $url");
 }
 
 function charCodeAt($str, $index) {
@@ -99,3 +119,4 @@ function fromCharCode($codes) {
     return $str;
 }
 //fromCharCode(78,79,60);
+

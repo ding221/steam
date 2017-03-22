@@ -1,7 +1,7 @@
 {
   "require": {
     "phpseclib/phpseclib": "~2.0",
-    "monolog/monolog": "^1.22"
+    "workerman/gateway-worker-for-win" : ">=3.0.0"
   },
   "repositories": {
     "packagist": {
