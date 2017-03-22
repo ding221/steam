@@ -1,5 +1,5 @@
 <?php
-$path = 'conf/cfg.csv';
+$path = __DIR__.DIRECTORY_SEPARATOR .'cfg.csv';
 
 $cfg = [];
 if (($handle = fopen($path, 'r')) !== false) {
