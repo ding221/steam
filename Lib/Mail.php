@@ -1,8 +1,7 @@
 <?php
 namespace Lib;
 
-class Mail
-{
+class Mail {
 	public $server = '';
 	public $username = '';
 	public $password = '';

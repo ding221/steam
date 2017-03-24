@@ -1,7 +1,8 @@
 {
   "require": {
     "phpseclib/phpseclib": "~2.0",
-    "workerman/gateway-worker-for-win" : ">=3.0.0"
+    "workerman/gateway-worker-for-win" : ">=3.0.0",
+    "workerman/mysql": "^1.0"
   },
   "repositories": {
     "packagist": {
@@ -17,4 +18,3 @@
 
 
 }
-
