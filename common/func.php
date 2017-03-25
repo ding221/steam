@@ -8,11 +8,11 @@
  * @method get
  * @return mixed
  */
-function curl_get($url, $timeout = 60) {
+function curl_get($url, $timeout = 60, $ssl = false) {
 	$curl = curl_init();
 	curl_setopt($curl, CURLOPT_URL, $url);
 	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-	curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //CURL请求https
+	curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, $ssl); //CURL请求https
 	//携带cookie访问
 	global $cookie_info;
 	if ($cookie_info != '') {
@@ -38,12 +38,16 @@ function curl_get($url, $timeout = 60) {
  * @params  time    int   过期时间
  * return  mixed
  */
-function https_post($url = '', $data = [], $time = 60) {
+function https_post($url = '', $data = [], $time = 60, $ssl = false) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_POST, TRUE);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	if ($ssl) {
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1); // 检查证书中是否设置域名
+	}
 
 	//携带cookie访问
 	global $cookie_info;
@@ -192,9 +196,9 @@ function get_http_status_message($code = 200) {
 		415 => 'Unsupported Media Type',
 		416 => 'Requested Range Not Satisfiable',
 		417 => 'Expectation Failed',
-		422 => 'Unprocessable Entity',//发送了非法的资源
+		422 => 'Unprocessable Entity', //发送了非法的资源
 		423 => 'Locked',
-        428 => 'Precondition Required',//缺少了必要的头信息,类似 -> Header User-Agent is required
+		428 => 'Precondition Required', //缺少了必要的头信息,类似 -> Header User-Agent is required
 		500 => 'Internal Server Error',
 		501 => 'Not Implemented',
 		502 => 'Bad Gateway',
@@ -217,28 +221,26 @@ function get_return_date($http_code = 200, $msg = '') {
 }
 
 //请求出错返回的信息
-function get_error_return($http_code = 422, $resource = null, $field = null, $code = null){
-    $return = [
-        'code' => $http_code,
-        'msg' => get_http_status_message($http_code),
-        "errors" => [
-            "resource" => $resource,//问题描述
-            "field" => $field, //字段
+function get_error_return($http_code = 422, $resource = null, $field = null, $code = null) {
+	$return = [
+		'code' => $http_code,
+		'msg' => get_http_status_message($http_code),
+		"errors" => [
+			"resource" => $resource, //问题描述
+			"field" => $field, //字段
 
-            /**
-             * code表示错误类型
-             * invalid  某个字段的值非法，接口文档中会提供相应的信息
-             * required 缺失某个必须的字段
-             * not_exist 说明某个字段的值代表的资源不存在
-             * already_exist 发送的资源中的某个字段的值和服务器中已有的某个资源冲突，常见于某些值全局唯一的字段，比如 @ 用的用户名
-             */
-            "code" => $code,
-        ],
-    ];
-    return $return;
+			/**
+			 * code表示错误类型
+			 * invalid  某个字段的值非法，接口文档中会提供相应的信息
+			 * required 缺失某个必须的字段
+			 * not_exist 说明某个字段的值代表的资源不存在
+			 * already_exist 发送的资源中的某个字段的值和服务器中已有的某个资源冲突，常见于某些值全局唯一的字段，比如 @ 用的用户名
+			 */
+			"code" => $code,
+		],
+	];
+	return $return;
 }
-
-
 
 //tuki 输入内容过滤函数
 function tuki_filter_input($type, $name = null, $default = null, $options = array(), $flags = null) {
