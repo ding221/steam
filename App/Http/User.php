@@ -36,7 +36,7 @@ class User {
 			$data = [
 				'username' => $cfg['username'],
 				'password' => $password,
-				'twofactorcode' => '7vb4y', //邮箱or令牌验证码
+				'twofactorcode' => 'xrnrp', //邮箱or令牌验证码
 				'emailauth' => '',
 				'loginfriendlyname' => '',
 				'captchagid' => -1,

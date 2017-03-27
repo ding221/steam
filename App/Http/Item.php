@@ -2,6 +2,7 @@
 namespace App\Http;
 
 use Lib\Steam;
+use Workerman\Protocols\Http;
 
 class Item {
 	public function inventory() {
@@ -23,40 +24,64 @@ class Item {
 	}
 
 	public function sendTransaction() {
-		$from = _get('from', '');
-		$from_item = _get('from_item', []);
-		$to_steamid = _get('to', '');
-		$to_item = _get('to_item', []);
+		//$from_item = _post('from_item', []);
+		$tradeoffermessage = trim(_post('tradeoffermessage', ''));
+		$to_steamid = _post('to', '');
+		$to_item = _post('to_item', []);
+		$token = trim(_post('token', ''));
+
 		$trade_info = [
-			'serverid' => '',
-			'newversion' => '',
-			'version' => '',
+			'serverid' => '1', // ???
+			'tradeoffermessage' => $tradeoffermessage, //发送报价时的留言
+			'newversion' => true, // ???
+			'version' => '2', // ???
 			'me_currency' => [],
-			'me_ready' => false, //次出存疑
+			'me_ready' => false, // ???
 			'them_currency' => [],
-			'them_ready' => false, //次出存疑
-			'trade_offer_access_token' => '',
+			'them_ready' => false, // ???
+			'trade_offer_access_token' => $token, //从steam设置的交易链接中获取token值
 		];
 
 		//bot 发出报价时应该空
 		$from_assets = [
 
-		];	
-
-		$to_assets = [
-			[
-				"appid" => $game_id, //game_id
-				"contextid" => "2", //测试3次值都为2
-				"amount" => $amount, // 数量
-				"assetid" => $item_id, //(商品ID)8042779318
-			],
 		];
+
+		$to_assets = [];
+		//$to_assets = [
+		//	[
+		//		"appid" => $to_item['game_id'], //game_id
+		//		"contextid" => "2", //测试3次值都为2
+		//		"amount" => $to_item['amount'], // 数量
+		//		"assetid" => $to_item['item_id'], //(商品ID)8042779318
+		//	],
+		//];
+		foreach ($to_item as $item) {
+			$to_assets = [
+				[
+					'appid' => $item['appid'],
+					"contextid" => $item['contextid'],
+					"amount" => $item['amount'],
+					"assetid" => $item['assetid'],
+				]
+			];
+		}
+		
+		$trade_info = Steam::launchTransaction($to_steamid, $trade_info, $from_assets, $to_assets);
+		//可能的结果1：{"tradeofferid":"1974096885","needs_mobile_confirmation":true,"needs_email_confirmation":false,"email_domain":"qq.com"}
+		//可能的结果2：{"tradeofferid":"1974096885"}
+		//可能的结果3：？？？
+		print_r($trade_info);
+		//if ($tradeoffid > 1) {
+			return get_return_date(200, $trade_info);
+		//}
+
 	}
 
-	public function cancelTransaction(){
+	public function cancelTransaction() {
 		$tradeofferid = _get('tradeofferid', 0);
 		if ($tradeofferid < 1) {
-			return get_error_return(422, "Validation Failed"， "tradeofferid", "required");
+			return get_error_return(422, "Validation Failed", "tradeofferid", "required");
 		}
 
 		$_tradeofferid = Steam::launchTransaction($tradeofferid);

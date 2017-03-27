@@ -8,6 +8,7 @@ use Workerman\Protocols\Http;
 date_default_timezone_set('Asia/Singapore');
 
 define('GLOBAL_START', 1);
+define('TRADE_COOKIE', dirname(__FILE__) . '/cookie/');
 // 自动加载类
 require_once './vendor/autoload.php';
 //加载通用函数库
@@ -65,8 +66,8 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 	}
     Http::header('Access-Control-Allow-Origin:*');
     Http::header('Access-Control-Allow-Methods: GET, POST');//PUT, DELETE, HEAD, OPTIONS
-    Http::header('Cache-Control: no-cache');//禁止浏览器缓存信息
-	Http::input(json_encode($data), $connection);
+    Http::header('Cache-Control: no-cache');
+	//Http::input(json_encode($data), $connection);
 	Http::sessionStart();
 	$uri = ltrim($_SERVER["REQUEST_URI"], '/');
 

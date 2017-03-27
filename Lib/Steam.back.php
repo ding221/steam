@@ -1,7 +1,7 @@
 <?php
 namespace Lib;
 
-class Steam {
+class Steam_back {
 	//static protected $g_steamID = null;
 	static protected $language;
 	static protected $country;
@@ -262,5 +262,17 @@ class Steam {
 		return $tradeofferid = https_post($url, $data, 60, 1); //需要带https访问
 
 	}
+
+	//notifications":{
+	//"4":0,
+	//"5":0,
+	//"6":0,
+	//"8":0,
+	//"9":0,
+	//"1":1, //有一条新的交易通知
+	//"2":0,
+	//"3":0,
+	//"10":0,
+	//"11":0}}
 
 }

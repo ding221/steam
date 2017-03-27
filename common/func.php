@@ -46,7 +46,7 @@ function https_post($url = '', $data = [], $time = 60, $ssl = false) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 	if ($ssl) {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1); // 检查证书中是否设置域名
+		//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1); // 检查证书中是否设置域名
 	}
 
 	//携带cookie访问
@@ -67,8 +67,41 @@ function https_post($url = '', $data = [], $time = 60, $ssl = false) {
 	return $result;
 }
 
-function get_cookie($website_url) {
-	$cookie_file = dirname(__FILE__) . '/cookie.txt';
+function https_post1($url = '', $data = [], $time = 60, $ssl = false, $header = null) {
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_POST, TRUE);
+	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	if ($ssl) {
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
+		//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1); // 检查证书中是否设置域名
+	}
+
+	//携带cookie访问
+	global $cookie_info;
+	if ($cookie_info != '') {
+		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
+		//$cookie_file =  dirname(__FILE__) . '/cookie.txt';
+		//curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_file); //使用文件里的cookies
+	}
+
+	if ($header && is_array($header)){
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+	}
+	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+	curl_setopt($ch, CURLOPT_TIMEOUT, $time);
+	curl_setopt($ch, CURLOPT_HEADER, TRUE);
+	$result = curl_exec($ch);
+	if (curl_errno($ch)) {
+		return 'Errno ' . curl_error($ch);
+	}
+	curl_close($ch);
+	return $result;
+}
+
+function get_cookie($website_url, $filepath = null) {
+	$cookie_file = $filepath ? $filepath : dirname(__FILE__) . '/cookie.txt';
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $website_url);
 	curl_setopt($ch, CURLOPT_HEADER, true);
@@ -283,6 +316,8 @@ function _get($name, $default = null, $options = array(), $flags = FILTER_FLAG_N
 
 function _post($name = null, $default = null, $options = array(), $flags = null) {
 	//return tuki_filter_input(INPUT_POST, $name, $default, $options, $flags);
+	if ($name == '')
+		return $_POST;
 	return $value = isset($_POST[$name]) ? $_POST[$name] : $default;
 }
 
