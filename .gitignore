@@ -2,3 +2,6 @@
 /vendor
 /log
 /download
+/common/*.txt
+App/*/*.back.php
+Lib/*.back.php
