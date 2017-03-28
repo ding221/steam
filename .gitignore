@@ -3,5 +3,5 @@
 /log
 /download
 /common/*.txt
-App/*/*.back.php
-Lib/*.back.php
+/App/*/*.back.php
+/Lib/*.back.php
