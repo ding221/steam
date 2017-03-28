@@ -9,11 +9,11 @@ class Item {
 		$steamid = _get('steamid', '');
 		$game_id = _get('game_id', '');
 		if ($steamid == '' && $steamid < 1) {
-			return get_error_return(422, 'Validation Failed', 'steamid', 'required');
+			return get_error_return(422, 'missing required parameter', 'steamid', 'required');
 		}
 
 		if ($game_id != '' && $game_id < 1) {
-			return get_error_return(422, 'Validation Failed', 'game_id', 'required');
+			return get_error_return(422, 'missing required parameter', 'game_id', 'required');
 		}
 
 		$language = (isset($_GET['language']) && $_GET['language']) ? $_GET['language'] : 'en';
@@ -39,6 +39,8 @@ class Item {
 			'me_ready' => false, // ???
 			'them_currency' => [],
 			'them_ready' => false, // ???
+
+			//https://steamcommunity.com/tradeoffer/new/?partner=43443562&token=TkzH4VYR
 			'trade_offer_access_token' => $token, //从steam设置的交易链接中获取token值
 		];
 
@@ -81,7 +83,7 @@ class Item {
 	public function cancelTransaction() {
 		$tradeofferid = _get('tradeofferid', 0);
 		if ($tradeofferid < 1) {
-			return get_error_return(422, "Validation Failed", "tradeofferid", "required");
+			return get_error_return(422, "missing required parameter", "tradeofferid", "required");
 		}
 
 		$_tradeofferid = Steam::launchTransaction($tradeofferid);

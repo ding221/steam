@@ -38,24 +38,27 @@ function curl_get($url, $timeout = 60, $ssl = false) {
  * @params  time    int   过期时间
  * return  mixed
  */
-function https_post($url = '', $data = [], $time = 60, $ssl = false) {
+function https_post($url = '', $data = [], $ssl = false , $header = null, $save = null, $time = 60) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_POST, TRUE);
-	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 	if ($ssl) {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
-		//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1); // 检查证书中是否设置域名
 	}
-
+    if ($header && is_array($header)){
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+    }
 	//携带cookie访问
 	global $cookie_info;
 	if ($cookie_info != '') {
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
-		//$cookie_file =  dirname(__FILE__) . '/cookie.txt';
-		//curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_file); //使用文件里的cookies
 	}
+    if ($save){
+        $path = dirname(__FILE__) . '/cook.txt';
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $path);
+        curl_setopt ($ch, CURLOPT_COOKIEFILE, $path);
+    }
 
 	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 	curl_setopt($ch, CURLOPT_TIMEOUT, $time);
@@ -67,7 +70,8 @@ function https_post($url = '', $data = [], $time = 60, $ssl = false) {
 	return $result;
 }
 
-function https_post1($url = '', $data = [], $time = 60, $ssl = false, $header = null) {
+//测试用例
+function https_post1($url = '', $data = [], $ssl = false , $header = null, $save = null, $time = 60) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_POST, TRUE);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -75,47 +79,52 @@ function https_post1($url = '', $data = [], $time = 60, $ssl = false, $header = 
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 	if ($ssl) {
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
-		//curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 1); // 检查证书中是否设置域名
 	}
-
-	//携带cookie访问
-	global $cookie_info;
-	if ($cookie_info != '') {
-		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
-		//$cookie_file =  dirname(__FILE__) . '/cookie.txt';
-		//curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_file); //使用文件里的cookies
-	}
-
 	if ($header && is_array($header)){
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 	}
 	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 	curl_setopt($ch, CURLOPT_TIMEOUT, $time);
 	curl_setopt($ch, CURLOPT_HEADER, TRUE);
+	curl_setopt($ch, CURLINFO_HEADER_OUT, true);//打印请求头信息
+	//携带cookie访问
+	global $cookie_info;
+	if ($cookie_info != '') {
+		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
+	}
+    if ($save){
+        $path = dirname(__FILE__) . '/cook.txt';
+        curl_setopt($ch, CURLOPT_COOKIEJAR, $path);
+        curl_setopt ($ch, CURLOPT_COOKIEFILE, $path);
+    }
 	$result = curl_exec($ch);
 	if (curl_errno($ch)) {
 		return 'Errno ' . curl_error($ch);
 	}
+	$info = curl_getinfo( $ch, CURLINFO_HEADER_OUT);
 	curl_close($ch);
+	var_dump($info);//打印请求头信息
 	return $result;
 }
 
-function get_cookie($website_url, $filepath = null) {
-	$cookie_file = $filepath ? $filepath : dirname(__FILE__) . '/cookie.txt';
+function get_cookie($website_url) {
+	$cookie_file = dirname(__FILE__) . '/cookie.txt';
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $website_url);
 	curl_setopt($ch, CURLOPT_HEADER, true);
 	curl_setopt($ch, CURLOPT_NOBODY, true);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_file); //存储cookies
+    global $cookie_file;
+    if ($cookie_file) {
+        $path = dirname(__FILE__) . '/cook.txt';
+        curl_setopt ($ch, CURLOPT_COOKIEFILE, $path);
+    }
 	$results = curl_exec($ch);
 	curl_close($ch);
-	//preg_match_all('|Set-Cookie: (.*);|U', $results, $arr);
-	//if ($arr[1] == '') {
 	preg_match_all('|Cookie: (.*);|U', $results, $arr);
-	//}
-	//return $arr[1];
-	return $arr[1];
+    return $arr[1];
+	//return $results;
 }
 
 function send_cookie($cookie_info, $userinfo, $timeout) {
@@ -127,38 +136,58 @@ function send_cookie($cookie_info, $userinfo, $timeout) {
 		println('user info false');
 		return false;
 	}
-	$web_url = 'http://steamcommunity.com/profiles/' . $userinfo['steamid'] . '/home';
-	//$result = https_post($web_url, explode(';', $cookie_info), $timeout);
-	$result = curl_get($web_url, $timeout);
+	$web_url = 'http://steamcommunity.com/actions/GetNotificationCounts';
+	$headers = [];
+	$headers[] = 'Accept:*/*';
+	$headers[] = 'Accept-Encoding:gzip, deflate, sdch';
+	$headers[] = 'Accept-Language: zh-Hans-CN, zh-Hans; q=0.8, en-US; q=0.5, en; q=0.3';
+	$headers[] = 'Connection:keep-alive';
+	$headers[] = 'X-Requested-With:XMLHttpRequest';
+	$curl = curl_init();
+	curl_setopt($curl, CURLOPT_URL, $web_url);
+	curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+	curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+	curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false); //CURL请求https
+	//curl_setopt($curl, CURLOPT_HEADER, true);
+	//curl_setopt($curl, CURLINFO_HEADER_OUT, true);//打印请求头信息
+	//携带cookie访问
+	global $cookie_info;
+	if ($cookie_info != '') {
+		curl_setopt($curl, CURLOPT_COOKIE, $cookie_info);
+	}
+    
+	curl_setopt($curl, CURLOPT_TIMEOUT, $timeout);
+	$result = curl_exec($curl);
+	if (curl_errno($curl)) {
+		return 'Errno ' . curl_error($curl);
+	}
+	//$info = curl_getinfo($curl, CURLINFO_HEADER_OUT);//打印请求头信息
+	curl_close($curl);
 	if ($result) {
 		println('send!');
 	}
-
 }
 
-function get_login_info() {
-	if (!file_exists(COOKIE)) {
-		return false;
-	}
-	$time = filemtime(COOKIE);
-	if (($time + 3600 * 6) < time()) {
-		return false;
-	}
-	$data = file_get_contents(COOKIE);
-	$cookie = json_decode($data, 1);
-	if (isset($cookie['steamid'])) {
-		return $cookie;
-	} else {
-		return false;
-	}
+function get_file_cookie(){
+    $file = dirname(__FILE__) . '/cook.txt';
+    $info = file_get_contents($file);
+    $info = json_encode($info);
+    $info = explode('\n', $info);
+    $arr = [
+        explode('\t', $info[4]),
+        explode('\t', $info[5]),
+        explode('\t', $info[6]),
+    ];
+    $login = [];
+    foreach ($arr as $value) {
+        $login[] = $value[5] . "=".$value[6];
+    }
+    return $login;
+
 }
 
 function println($str) {
 	print("$str\n");
-}
-
-function redirect($url) {
-	header("Location: $url");
 }
 
 //返回指定位置的字符的 Unicode 编码

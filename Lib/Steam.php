@@ -76,12 +76,12 @@ class Steam {
 	static public function getInventory($steamid, $appid, $language = 'en') {
 		//730->csgo  570->dota
 		self::setLanguage($language);
-		//$url2 = 'http://steamcommunity.com/inventory/76561198003709290/730/2?l=schinese&count=75';
-		//return $url = 'http://steamcommunity.com/inventory/' .
-		//	$steamid . '/' . $game_id . '/2?l=' . self::$language . '&count=75';
+		$url2 = 'http://steamcommunity.com/inventory/76561198003709290/730/2?l=schinese&count=75';
+		return $url = 'http://steamcommunity.com/inventory/' .
+			$steamid . '/' . $appid . '/2?l=' . self::$language . '&count=75';
 
 		//$url = 'https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=52fb483fecac8737e81442c7&partner=76561198003709290&appid=570&contextid=2';
-		return $url = 'https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=' . $sessionid . '&partner=' . $steamid . '&appid=' . $appid . '&contextid=2';
+		//return $url = 'https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=' . $sessionid . '&partner=' . $steamid . '&appid=' . $appid . '&contextid=2';
 
 	}
 
@@ -114,8 +114,9 @@ class Steam {
 	static public function launchTransaction($to_steamid = '', $trade_info = [], $from_assets = [], $to_assets = []) {
 		//机器人发送空的交易报价，相当于是客户赠送给机器人的礼物
 		global $cookie_info;
-		$cookie = explode(';', $cookie_info);
-		$sessionid = substr($cookie[0], 10, -1);
+		$cookie = explode('; ', $cookie_info);
+		$sessionid = substr($cookie[5], 10);
+		//$url = 'https://steamcommunity.com/tradeoffer/new/send?token=' . substr($cookie[7], 6);
 		$url = 'https://steamcommunity.com/tradeoffer/new/send';
 		$data = [
 			'sessionid' => $sessionid, //交易发起人的sessionid
@@ -164,19 +165,15 @@ class Steam {
 				];
 			}
 		}
-		$cookie_url = 'https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid='.$sessionid.'&partner='.$to_steamid.'&appid=570&contextid=2';
-		$filepath = TRADE_COOKIE . $to_steamid . '.txt';
-		$cookiee = get_cookie($cookie_url, $filepath);
-var_dump($cookiee);
+
 		$headers = [];
 		$headers[] = 'Accept:*/*';
 		$headers[] = 'Accept-Encoding:gzip, deflate, br';
-		$headers[] = 'Accept-Language:zh-CN,zh;q=0.8';
+		$headers[] = 'Accept-Language: zh-Hans-CN, zh-Hans; q=0.8, en-US; q=0.5, en; q=0.3';
 		$headers[] = 'Connection:keep-alive';
 		$headers[] = 'Content-Type:application/x-www-form-urlencoded; charset=UTF-8';
-		$headers[] = 'Cookie:' . join(';', $cookiee);
 
-		return $tradeofferid = https_post1($url, $data, 60, 1, $headers); //需要https访问
+		return $tradeofferid = https_post1($url, $data, 1, $headers); //需要https访问
 	}
 
 	/**
@@ -187,14 +184,14 @@ var_dump($cookiee);
 	 */
 	public static function cancelTransaction($tradeofferid) {
 		global $cookie_info;
-		$cookie = explode(';', $cookie_info);
-		$sessionid = substr($cookie[0], 10, -1);
+		$cookie = explode('; ', $cookie_info);
+		$sessionid = substr($cookie[5], 10);
 		$url = 'https://steamcommunity.com/tradeoffer/' . $tradeofferid . '/cancel';
 		$data = [
 			'sessionid' => $sessionid,
 		];
 
-		return $tradeofferid = https_post($url, $data, 60, 1); //返回取消报价的 tradeofferid
+		return $tradeofferid = https_post($url, $data, 1); //返回取消报价的 tradeofferid
 	}
 
 	//拒绝交易
