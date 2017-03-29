@@ -76,13 +76,8 @@ class Steam {
 	static public function getInventory($steamid, $appid, $language = 'en') {
 		//730->csgo  570->dota
 		self::setLanguage($language);
-		$url2 = 'http://steamcommunity.com/inventory/76561198003709290/730/2?l=schinese&count=75';
-		return $url = 'http://steamcommunity.com/inventory/' .
-			$steamid . '/' . $appid . '/2?l=' . self::$language . '&count=75';
-
-		//$url = 'https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=52fb483fecac8737e81442c7&partner=76561198003709290&appid=570&contextid=2';
-		//return $url = 'https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=' . $sessionid . '&partner=' . $steamid . '&appid=' . $appid . '&contextid=2';
-
+		//$url2 = 'http://steamcommunity.com/inventory/76561198003709290/730/2?l=schinese&count=75';
+		return $url = 'http://steamcommunity.com/inventory/' . $steamid . '/' . $appid . '/2?l=' . self::$language . '&count=75';
 	}
 
 	/**
@@ -94,15 +89,7 @@ class Steam {
 		return $url = 'https://steamcommunity.com/profiles/'
 		. $steamid . '/tradeoffers/privacy#trade_offer_access_url';
 	}
-
-	/*
-	查询对方库存
-	https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=a876df578bc491c501facc17&partner=76561198003709290&appid=730&contextid=2
-
-	https://steamcommunity.com/tradeoffer/new/partnerinventory/?sessionid=a876df578bc491c501facc17&partner=76561198003709290&appid=570&contextid=2
-
-	 */
-
+    
 	/**
 	 * 发送交易报价
 	 * @param  string $to_steamid  [description]
@@ -113,11 +100,9 @@ class Steam {
 	 */
 	static public function launchTransaction($to_steamid = '', $trade_info = [], $from_assets = [], $to_assets = []) {
 		//机器人发送空的交易报价，相当于是客户赠送给机器人的礼物
-		global $cookie_info;
-		$cookie = explode('; ', $cookie_info);
-		$sessionid = substr($cookie[5], 10);
-		//$url = 'https://steamcommunity.com/tradeoffer/new/send?token=' . substr($cookie[7], 6);
+		$sessionid = get_cookie_info('sessionid');
 		$url = 'https://steamcommunity.com/tradeoffer/new/send';
+		//$url = 'https://steamcommunity.com/tradeoffer/new/send';
 		$data = [
 			'sessionid' => $sessionid, //交易发起人的sessionid
 			'serverid' => $trade_info['serverid'], //服务器ID
@@ -173,7 +158,7 @@ class Steam {
 		$headers[] = 'Connection:keep-alive';
 		$headers[] = 'Content-Type:application/x-www-form-urlencoded; charset=UTF-8';
 
-		return $tradeofferid = https_post1($url, $data, 1, $headers); //需要https访问
+		return https_post1($url, $data, true, $headers);
 	}
 
 	/**
@@ -183,9 +168,7 @@ class Steam {
 	 * @return string $tradeofferid
 	 */
 	public static function cancelTransaction($tradeofferid) {
-		global $cookie_info;
-		$cookie = explode('; ', $cookie_info);
-		$sessionid = substr($cookie[5], 10);
+		$sessionid = get_cookie_info('sessionid');;
 		$url = 'https://steamcommunity.com/tradeoffer/' . $tradeofferid . '/cancel';
 		$data = [
 			'sessionid' => $sessionid,

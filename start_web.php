@@ -24,15 +24,12 @@ $worker->name = 'SteamWorker';
 // 新增加一个属性，用来保存uid到connection的映射
 $worker->uidConnections = array();
 $worker->onWorkerStart = function ($worker) {
-	//global $db;
-	//$db = new Workerman\MySQL\Connection('host', 'port', 'user', 'password', 'db_name');
-
 	User::login();
 	global $cookie_info;
 	global $userinfo;
-	//global $login;
+
 	if ($cookie_info && $userinfo) {
-		Timer::add(HEARTBEAT_TIME, 'send_cookie', [$cookie_info, $userinfo, HEARTBEAT_TIME]);
+		Timer::add(HEARTBEAT_TIME, 'get_Notification_Counts', [$cookie_info, $userinfo, HEARTBEAT_TIME]);
 	}
 
 	//验证客户端是否离线
@@ -84,8 +81,7 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 			$a = $uri[1];
 			if (class_exists($c) && method_exists($c, $a)){
 				$o = new $c;
-				$data = $o->$a();
-				$info = $data;
+				$info = $o->$a();
 			} else {
 				$info = get_return_date(404, 'Resource not found');
 			}
@@ -107,10 +103,7 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 	sendMessageByUid($connection->uid, json_encode($info));
 
 };
-//
-//$worker->onConnect = function ($connection) use($worker){
-//	$connection->send('Connect success.');
-//};
+
 // 当有客户端连接断开时
 $worker->onClose = function ($connection) use ($worker) {
 	global $worker;
