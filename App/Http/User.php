@@ -21,7 +21,7 @@ class User {
 		self::doLogin($login);
 	}
 
-	protected static function doLogin($login_info = null, $data = [], $save = null) {
+	protected static function doLogin($login_info = null, $data = []) {
 		global $cfg;
 		if (!count($data)) {
 			$rsa_result = json_decode($login_info);
@@ -36,7 +36,7 @@ class User {
 			$data = [
 				'username' => $cfg['username'],
 				'password' => $password,
-				'twofactorcode' => '', //邮箱or令牌验证码
+				'twofactorcode' => 'd79m6', //邮箱or令牌验证码
 				'emailauth' => '',
 				'loginfriendlyname' => '',
 				'captchagid' => -1,
@@ -48,37 +48,35 @@ class User {
 		}
 
 		$do_logion_url = 'https://store.steampowered.com/login/dologin/'; //post
-		$login = https_post($do_logion_url, $data , 1, null, $save = 1); //先请求一次，让steam发送验证码
+		$login = https_post($do_logion_url, $data, 1, null); //先请求一次，让steam发送验证码
 		global $cookie_file;
 		$cookie_file = true;
 		$login_result = json_decode($login);
 		if ($login_result->success) {
 			if ($login_result->login_complete) {
 				println('Login success!');
-
-				$transfer_parameters = [
+				@$transfer_parameters = [
 					'steamid' => $login_result->transfer_parameters->steamid,
 					'token' => $login_result->transfer_parameters->token,
 					'auth' => $login_result->transfer_parameters->auth,
-					'remember_login' => $login_result->transfer_parameters->remember_login ?$login_result->transfer_parameters->remember_login : 'false',
-					//'webcookie' => $login_result->transfer_parameters->webcookie,
+					'remember_login' => $login_result->transfer_parameters->remember_login ? $login_result->transfer_parameters->remember_login : 'false',
+					'webcookie' => $login_result->transfer_parameters->webcookie,
 					'token_secure' => $login_result->transfer_parameters->token_secure,
 				];
-
 				global $cookie_info;
 				global $userinfo;
+				https_post($login_result->transfer_urls[0], $transfer_parameters, true, null, true);
 				$cookie_info = get_file_cookie();
 				$web_url = 'http://store.steampowered.com/';
 				$cookie = array_merge($cookie_info, get_cookie($web_url));
 				$cookie_info = join('; ', $cookie) . '; '; //fruit=apple;colour=red
-
-				foreach ($transfer_parameters as $idx => $value){
-					$cookie_info .= $idx .'='. $value . '; ';
+				foreach ($transfer_parameters as $idx => $value) {
+					$cookie_info .= $idx . '=' . $value . '; ';
 				}
 				$cookie_info = rtrim($cookie_info, '; ');
 				$userinfo = $transfer_parameters;
 				//把登录信息放入文件中
-				file_put_contents('./steaminfo.json', json_encode($userinfo));
+				file_put_contents('.'.DIRECTORY_SEPARATOR . 'runtime' . DIRECTORY_SEPARATOR . $login_result->transfer_parameters->steamid .'.json', json_encode($userinfo));
 				return false;
 			}
 		} else {
@@ -103,6 +101,7 @@ class User {
 				}
 			}
 		}
+		return false;
 	}
 
 	public static function receiveEmail() {

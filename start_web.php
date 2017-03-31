@@ -2,17 +2,18 @@
 //ini_set('display_errors', 'on');
 use App\Http\User;
 use Workerman\Lib\Timer;
-use Workerman\Worker;
 use Workerman\Protocols\Http;
+use Workerman\Worker;
 
 date_default_timezone_set('Asia/Singapore');
 
 define('GLOBAL_START', 1);
-define('TRADE_COOKIE', dirname(__FILE__) . '/cookie/');
 // 自动加载类
 require_once './vendor/autoload.php';
-//加载通用函数库
-require_once './common/func.php';
+
+//通过composer自动加载通用函数库
+//require_once './common/func.php';
+//加载配置文件
 require_once './conf/cfg.php';
 
 Http::header("Access-Control-Allow-Origin:*");
@@ -27,8 +28,8 @@ $worker->onWorkerStart = function ($worker) {
 	User::login();
 	global $cookie_info;
 	global $userinfo;
-
 	if ($cookie_info && $userinfo) {
+		println('gogo');
 		Timer::add(HEARTBEAT_TIME, 'get_Notification_Counts', [$cookie_info, $userinfo, HEARTBEAT_TIME]);
 	}
 
@@ -61,16 +62,16 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 		//return $connection->send('login success, your uid is ' . $connection->uid);
 		// return sendMessageByUid($connection->uid, '');
 	}
-    Http::header('Access-Control-Allow-Origin:*');
-    Http::header('Access-Control-Allow-Methods: GET, POST');//PUT, DELETE, HEAD, OPTIONS
-    Http::header('Cache-Control: no-cache');
+	Http::header('Access-Control-Allow-Origin:*');
+	Http::header('Access-Control-Allow-Methods: GET, POST'); //PUT, DELETE, HEAD, OPTIONS
+	Http::header('Cache-Control: no-cache');
 	//Http::input(json_encode($data), $connection);
 	Http::sessionStart();
 	$uri = ltrim($_SERVER["REQUEST_URI"], '/');
 
-	if ($uri != ''){
+	if ($uri != '') {
 		$place = strstr($uri, '?');
-		if ($place !== false){
+		if ($place !== false) {
 			$uri = strstr($uri, '?', true);
 		}
 		$uri = explode('/', $uri);
@@ -79,7 +80,7 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 			$c = 'App\\Http\\'; //加载控制器的命名空间
 			$c .= ucfirst($uri[0]);
 			$a = $uri[1];
-			if (class_exists($c) && method_exists($c, $a)){
+			if (class_exists($c) && method_exists($c, $a)) {
 				$o = new $c;
 				$info = $o->$a();
 			} else {
@@ -87,7 +88,7 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 			}
 		} else {
 			$info = get_return_date(404, 'Resource not found');
-			if ($uri[0] === 'favicon.ico'){
+			if ($uri[0] === 'favicon.ico') {
 				$info = get_return_date(200);
 				unset($info['msg']);
 			}
@@ -97,9 +98,9 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 	}
 
 	Http::setcookie('botSession', session_id(), 3600, '/', '');
-    Http::header('Content-Type:application/json;charset=utf-8');
+	Http::header('Content-Type:application/json;charset=utf-8');
 	Http::header("HTTP/1.1 " . $info['code'] . " " . get_http_status_message($info['code']) . "\r\n\r\n", true, $info['code']);
-    unset($info['code']);
+	unset($info['code']);
 	sendMessageByUid($connection->uid, json_encode($info));
 
 };
@@ -110,14 +111,13 @@ $worker->onClose = function ($connection) use ($worker) {
 	if (isset($connection->uid)) {
 		// 连接断开时删除映射
 		unset($worker->uidConnections[$connection->uid]);
-		echo "Client ID " . $connection->uid .' Closed' . PHP_EOL;
+		echo "Client ID " . $connection->uid . ' Closed' . PHP_EOL;
 	}
 };
 
 $worker->onError = function ($connection, $code, $msg) {
 	echo "error $code $msg\n";
 };
-
 
 // 针对uid推送数据
 function sendMessageByUid($uid, $message) {
@@ -128,8 +128,6 @@ function sendMessageByUid($uid, $message) {
 	}
 	return false;
 }
-
-
 
 // 运行worker
 Worker::runAll();

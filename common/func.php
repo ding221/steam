@@ -8,14 +8,17 @@
  * @method get
  * @return mixed
  */
-function curl_get($url, $ssl = false, $timeout = 60) {
+function curl_get($url, $ssl = false, $header = null, $timeout = 60) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	if ($ssl) {
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // 检查证书中是否设置域名
-    }
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // 检查证书中是否设置域名
+	}
+	if ($header && is_array($header)) {
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+	}
 	//携带cookie访问
 	global $cookie_info;
 	if ($cookie_info != '') {
@@ -41,31 +44,31 @@ function curl_get($url, $ssl = false, $timeout = 60) {
  * @params  time    int   过期时间
  * return  mixed
  */
-function https_post($url = '', $data = [], $ssl = false , $header = null, $save = null, $time = 60) {
+function https_post($url = '', $data = [], $ssl = false, $header = null, $save = null, $time = 60) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_POST, TRUE);
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 	if ($ssl) {
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // 检查证书中是否设置域名
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // 检查证书中是否设置域名
 	}
-    if ($header && is_array($header)){
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
-    }
+	if ($header && is_array($header)) {
+		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
+	}
 	//携带cookie访问
 	global $cookie_info;
 	if ($cookie_info != '') {
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
 	}
-    if ($save){
-        $path = dirname(__FILE__) . '/cook.txt';
-        if (file_exists($path)) {
-            unlink($path);
-        }
-        curl_setopt($ch, CURLOPT_COOKIEJAR, $path);
-        curl_setopt ($ch, CURLOPT_COOKIEFILE, $path);
-    }
+	if ($save) {
+		$path = dirname(__FILE__) . '/cook.txt';
+		if (file_exists($path)) {
+			unlink($path);
+		}
+		curl_setopt($ch, CURLOPT_COOKIEJAR, $path);
+		curl_setopt($ch, CURLOPT_COOKIEFILE, $path);
+	}
 
 	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
 	curl_setopt($ch, CURLOPT_TIMEOUT, $time);
@@ -77,65 +80,70 @@ function https_post($url = '', $data = [], $ssl = false , $header = null, $save 
 	return $result;
 }
 
-//测试用例
-function https_post1($url = '', $data = [], $ssl = false , $header = null, $save = null, $time = 60) {
+//测试用例, 会输出response header
+function https_post1($url = '', $data = [], $ssl = false, $header = null, $save = null, $time = 60) {
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_POST, TRUE);
 	curl_setopt($ch, CURLOPT_URL, $url);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
 	if ($ssl) {
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // 检查证书中是否设置域名
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // 信任任何证书
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2); // 检查证书中是否设置域名
 	}
-	if ($header && is_array($header)){
+	if ($header && is_array($header)) {
 		curl_setopt($ch, CURLOPT_HTTPHEADER, $header);
 	}
-	curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    if (is_array($data))
+        $data = http_build_query($data);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 	curl_setopt($ch, CURLOPT_TIMEOUT, $time);
 	curl_setopt($ch, CURLOPT_HEADER, TRUE);
-	//curl_setopt($ch, CURLINFO_HEADER_OUT, true);//打印请求头信息
+	curl_setopt($ch, CURLINFO_HEADER_OUT, true);//打印请求头信息
 	//携带cookie访问
 	global $cookie_info;
 	if ($cookie_info != '') {
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
 	}
-    if ($save){
-        $path = dirname(__FILE__) . '/cook.txt';
-        if (file_exists($path)) {
-            unlink($path);
-        }
-        curl_setopt($ch, CURLOPT_COOKIEJAR, $path);
-        curl_setopt($ch, CURLOPT_COOKIEFILE, $path);
-    }
+	if ($save) {
+		$path = dirname(__FILE__) . '/cook.txt';
+		if (file_exists($path)) {
+			unlink($path);
+		}
+		curl_setopt($ch, CURLOPT_COOKIEJAR, $path);
+		curl_setopt($ch, CURLOPT_COOKIEFILE, $path);
+	}
 	$result = curl_exec($ch);
 	if (curl_errno($ch)) {
 		return 'Errno ' . curl_error($ch);
 	}
-	//$info = curl_getinfo( $ch, CURLINFO_HEADER_OUT);//打印请求头信息
+	$info = curl_getinfo( $ch, CURLINFO_HEADER_OUT);//打印请求头信息
 	curl_close($ch);
+	print_r($info);
 	return $result;
 
 }
 
 function get_cookie($website_url) {
 	$cookie_file = dirname(__FILE__) . '/cookie.txt';
-    if (file_exists($cookie_file))
-        unlink($cookie_file);
+	if (file_exists($cookie_file)) {
+		unlink($cookie_file);
+	}
+
 	$ch = curl_init();
 	curl_setopt($ch, CURLOPT_URL, $website_url);
 	curl_setopt($ch, CURLOPT_HEADER, true);
 	curl_setopt($ch, CURLOPT_NOBODY, true);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_file); //存储cookies
-    global $cookie_file;
-    if ($cookie_file) {
-        $path = dirname(__FILE__) . '/cook.txt';
-        curl_setopt($ch, CURLOPT_COOKIEFILE, $path);
-    }
+	global $cookie_file;
+	if ($cookie_file) {
+		$path = dirname(__FILE__) . '/cook.txt';
+		curl_setopt($ch, CURLOPT_COOKIEFILE, $path);
+	}
 	$results = curl_exec($ch);
 	curl_close($ch);
 	preg_match_all('|Cookie: (.*);|U', $results, $arr);
-    return $arr[1];
+	return $arr[1];
 	//return $results;
 }
 
@@ -160,53 +168,56 @@ function get_Notification_Counts($cookie_info, $userinfo, $timeout = 60) {
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 	curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); //CURL请求https
-    curl_setopt($ch, CURLOPT_ENCODING,'gzip');
-	//curl_setopt($ch, CURLOPT_HEADER, true);
-	//curl_setopt($ch, CURLINFO_HEADER_OUT, true);//打印请求头信息
+	curl_setopt($ch, CURLOPT_ENCODING, 'gzip');
 	//携带cookie访问
 	if ($cookie_info != '') {
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
 	}
-    
+
 	curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
 	$result = curl_exec($ch);
 	if (curl_errno($ch)) {
 		return 'Errno ' . curl_error($ch);
 	}
-	//$info = curl_getinfo($ch, CURLINFO_HEADER_OUT);//打印请求头信息
 	curl_close($ch);
 	if ($result) {
 		println('send!');
-        return $result;
+		return $result;
 	}
 }
 
-function get_file_cookie(){
-    $file = dirname(__FILE__) . '/cook.txt';
-    $info = file_get_contents($file);
-    $info = json_encode($info);
-    $info = explode('\n', $info);
-    $arr = [
-        explode('\t', $info[4]),
-        explode('\t', $info[5]),
-        explode('\t', $info[6]),
-    ];
-    $login = [];
-    foreach ($arr as $value) {
-        $login[] = $value[5] . "=".$value[6];
-    }
-    return $login;
+function get_file_cookie() {
+	$file = dirname(__FILE__) . '/cook.txt';
+	$info = file_get_contents($file);
+	$info = json_encode($info);
+	$info = explode('\n', $info);
+	$count = count($info);
+	$arr = [];
+	foreach ($info as $k => $v) {
+		if ($k > 3 && $k < $count - 1) {
+			$arr[] = explode('\t', $v);
+		}
+	}
+	$login = [];
+	foreach ($arr as $value) {
+		$login[] = $value[5] . "=" . $value[6];
+	}
+	return $login;
 }
 
-function get_cookie_info($field = ''){
+function get_cookie_info($field = '') {
+    if (!$field)
+        return false;
 	global $cookie_info;
 	$cookie = explode('; ', $cookie_info);
 	$len = strlen($field);
+	$value = '';
 	foreach ($cookie as $val) {
 		if (substr($val, 0, $len) == $field) {
-			return substr($val, $len + 1);
+			return $value = substr($val, $len + 1);
 		}
 	}
+	return $value;
 }
 
 function println($str) {
@@ -295,17 +306,17 @@ function get_http_status_message($code = 200) {
 
 //正常请求返回的信息
 function get_return_date($http_code = 200, $msg = '') {
-    if ($msg) {
-        if (is_string($msg)){
-            $message = json_decode($msg, true);
-            if (is_null($message)) {//不是json格式
-                $message = [$msg];
-            }
-            $msg = $message;
-        }
-    } else {
-        $msg = 'null';
-    }
+	if ($msg) {
+		if (is_string($msg)) {
+			$message = json_decode($msg, true);
+			if (is_null($message)) { //不是json格式
+				$message = [$msg];
+			}
+			$msg = $message;
+		}
+	} else {
+		$msg = 'null';
+	}
 	$return = [
 		'code' => $http_code,
 		//'error' => get_http_status_message($http_code),
@@ -326,7 +337,7 @@ function get_error_return($http_code = 422, $resource = null, $field = null, $co
 	$return = [
 		'code' => $http_code,
 		'msg' => get_http_status_message($http_code),
-        'success' => 'false',
+		'success' => 'false',
 		"errors" => [
 			"resource" => $resource, //问题描述
 			"field" => $field, //字段
@@ -385,8 +396,10 @@ function _get($name, $default = null, $options = array(), $flags = FILTER_FLAG_N
 
 function _post($name = null, $default = null, $options = array(), $flags = null) {
 	//return tuki_filter_input(INPUT_POST, $name, $default, $options, $flags);
-	if ($name == '')
+	if ($name == '') {
 		return $_POST;
+	}
+
 	return $value = isset($_POST[$name]) ? $_POST[$name] : $default;
 }
 
