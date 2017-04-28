@@ -16,7 +16,7 @@ require_once './vendor/autoload.php';
 //加载配置文件
 require_once './conf/cfg.php';
 
-Http::header("Access-Control-Allow-Origin:*");
+Http::header("Access-Control-Allow-Origin: *");
 
 //心跳间隔
 define('HEARTBEAT_TIME', 25);
@@ -25,18 +25,25 @@ $worker->name = 'SteamWorker';
 // 新增加一个属性，用来保存uid到connection的映射
 $worker->uidConnections = array();
 $worker->onWorkerStart = function ($worker) {
-	User::login();
+	//User::login('28w49');
 	global $cookie_info;
 	global $userinfo;
 	if ($cookie_info && $userinfo) {
-		println('gogo');
 		Timer::add(HEARTBEAT_TIME, 'get_Notification_Counts', [$cookie_info, $userinfo, HEARTBEAT_TIME]);
 	}
+
+	Timer::add(20, function () use($worker){
+	    foreach ($worker->connections as $connection) {
+	        println($connection->id);
+	        println('Test print');
+        }
+    });
 
 	//验证客户端是否离线
 	Timer::add(HEARTBEAT_TIME, function () use ($worker) {
 		$time_now = time();
 		foreach ($worker->connections as $connection) {
+            $connection->send('1');
 			// 有可能该connection还没收到过消息，则lastMessageTime设置为当前时间
 			if (empty($connection->lastMessageTime)) {
 				$connection->lastMessageTime = $time_now;
@@ -62,6 +69,7 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 		//return $connection->send('login success, your uid is ' . $connection->uid);
 		// return sendMessageByUid($connection->uid, '');
 	}
+
 	Http::header('Access-Control-Allow-Origin:*');
 	Http::header('Access-Control-Allow-Methods: GET, POST'); //PUT, DELETE, HEAD, OPTIONS
 	Http::header('Cache-Control: no-cache');
@@ -77,7 +85,7 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 		$uri = explode('/', $uri);
 
 		if (count($uri) > 1) {
-			$c = 'App\\Http\\'; //加载控制器的命名空间
+			$c = 'App\\Http\\'; //控制器的命名空间
 			$c .= ucfirst($uri[0]);
 			$a = $uri[1];
 			if (class_exists($c) && method_exists($c, $a)) {
@@ -97,12 +105,21 @@ $worker->onMessage = function ($connection, $data) use ($worker) {
 		$info = get_return_date(200);
 	}
 
-	Http::setcookie('botSession', session_id(), 3600, '/', '');
+	if(isset($a) && $a == 'login'){
+        global $cookie_info;
+        $cookie = explode('; ', $cookie_info);
+        foreach ($cookie as $val) {
+            $data = explode('=', $val);
+            Http::setcookie($data[0], $data[1], 3600, '/');
+            $_SESSION[session_id()][$data[0]] = $data[1];
+        }
+    }
+
+
 	Http::header('Content-Type:application/json;charset=utf-8');
 	Http::header("HTTP/1.1 " . $info['code'] . " " . get_http_status_message($info['code']) . "\r\n\r\n", true, $info['code']);
 	unset($info['code']);
 	sendMessageByUid($connection->uid, json_encode($info));
-
 };
 
 // 当有客户端连接断开时

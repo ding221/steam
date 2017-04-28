@@ -12,13 +12,23 @@ class User {
 
 	public static function login() {
 		global $cfg;
+		$uname = _get('username', '');
+		$pwd = _get('password', '');
+		$tfcode = _get('twofactorcode', '');
 		$login_url = 'https://store.steampowered.com/login/getrsakey/'; //post
 		if (!isset($cfg['username']) && !$cfg['username']) {
 			return false;
 		}
 
+		if ($uname)
+		    $cfg['username'] = $uname;
+        if ($pwd)
+            $cfg['password'] = $pwd;
+        if ($tfcode)
+            $cfg['twofactorcode'] = $tfcode;
+
 		$login = https_post($login_url, $cfg, 1);
-		self::doLogin($login);
+		return self::doLogin($login, null);
 	}
 
 	protected static function doLogin($login_info = null, $data = []) {
@@ -36,7 +46,7 @@ class User {
 			$data = [
 				'username' => $cfg['username'],
 				'password' => $password,
-				'twofactorcode' => 'd79m6', //邮箱or令牌验证码
+				'twofactorcode' => isset($cfg['twofactorcode']) ? $cfg['twofactorcode'] : '', //邮箱or令牌验证码
 				'emailauth' => '',
 				'loginfriendlyname' => '',
 				'captchagid' => -1,
@@ -65,19 +75,19 @@ class User {
 				];
 				global $cookie_info;
 				global $userinfo;
-				https_post($login_result->transfer_urls[0], $transfer_parameters, true, null, true);
-				$cookie_info = get_file_cookie();
+				https_post($login_result->transfer_urls[0], $transfer_parameters, true, null, $transfer_parameters['steamid']);
+				$cookie_info = get_file_cookie($transfer_parameters['steamid']);
 				$web_url = 'http://store.steampowered.com/';
-				$cookie = array_merge($cookie_info, get_cookie($web_url));
+				$cookie = array_merge($cookie_info, get_cookie($web_url, $transfer_parameters['steamid']));
 				$cookie_info = join('; ', $cookie) . '; '; //fruit=apple;colour=red
 				foreach ($transfer_parameters as $idx => $value) {
 					$cookie_info .= $idx . '=' . $value . '; ';
-				}
+                }
 				$cookie_info = rtrim($cookie_info, '; ');
 				$userinfo = $transfer_parameters;
 				//把登录信息放入文件中
 				file_put_contents('.'.DIRECTORY_SEPARATOR . 'runtime' . DIRECTORY_SEPARATOR . $login_result->transfer_parameters->steamid .'.json', json_encode($userinfo));
-				return false;
+				return get_return_date(200, 'Login success.');
 			}
 		} else {
 			if ($login_result->requires_twofactor) {
@@ -152,8 +162,7 @@ class User {
 				$files = $mail->GetAttach($i, $savePath); //获取邮件附件，返回的邮件附件信息数组
 				$imageList = [];
 				foreach ($files as $k => $file) {
-					if (isset($files['type']) && $files['type'] == 0) {
-//0为邮件内容图片,1 为附件
+					if (isset($files['type']) && $files['type'] == 0) {//0为邮件内容图片,1 为附件
 						$imageList[$file['title']] = $file['pathname'];
 					}
 				}

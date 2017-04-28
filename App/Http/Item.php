@@ -75,7 +75,13 @@ class Item {
 		//可能的结果1：{"tradeofferid":"1974096885","needs_mobile_confirmation":true,"needs_email_confirmation":false,"email_domain":"qq.com"}
 		//可能的结果2：{"tradeofferid":"1974096885"}
 		//可能的结果3：？？？
-		return get_return_date(200, $trade_info);
+
+        if (is_integer($trade_info)) {
+            return get_return_date(200, $trade_info);
+        } elseif ($trade_info = 'null') {
+            return get_error_return(403);
+        }
+
 	}
 
 	public function getItem() {

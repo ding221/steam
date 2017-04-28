@@ -76,7 +76,6 @@ class Steam {
 	static public function getInventory($steamid, $appid, $language = 'en') {
 		//730->csgo  570->dota
 		self::setLanguage($language);
-		//$url2 = 'http://steamcommunity.com/inventory/76561198003709290/730/2?l=schinese&count=75';
 		return $url = 'http://steamcommunity.com/inventory/' . $steamid . '/' . $appid . '/2?l=' . self::$language . '&count=75';
 	}
 
@@ -159,15 +158,17 @@ class Steam {
 		}
        
 		$headers = [];
-		$headers[] = 'Accept:*/*';
+        $headers[] = 'Method: post';
+        $headers[] = 'Accept:application/json, text/javascript;q=0.9, */*;q=0.5';
 		$headers[] = 'Accept-Encoding:gzip, deflate, br';
 		$headers[] = 'Accept-Language: zh-Hans-CN, zh-Hans; q=0.8, en-US; q=0.5, en; q=0.3';
         $headers[] = 'User-Agent:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/56.0.2924.87 Safari/537.36';
 		$headers[] = 'Referer:"'. $referer .'"';
 		$headers[] = 'Content-Type:application/x-www-form-urlencoded; charset=UTF-8';
         $headers[] = 'Connection:keep-alive';
+        $headers[] = 'Timeout: 50000';
 
-		return https_post1($url, $data, true, $headers);
+		return https_post($url, $data, true, $headers);
 	}
 
 	/**

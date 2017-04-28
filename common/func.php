@@ -62,7 +62,7 @@ function https_post($url = '', $data = [], $ssl = false, $header = null, $save =
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
 	}
 	if ($save) {
-		$path = dirname(__FILE__) . '/cook.txt';
+		$path = dirname(__FILE__) . '/../runtime/cookie/'.$save.'.txt';
 		if (file_exists($path)) {
 			unlink($path);
 		}
@@ -105,7 +105,7 @@ function https_post1($url = '', $data = [], $ssl = false, $header = null, $save 
 		curl_setopt($ch, CURLOPT_COOKIE, $cookie_info);
 	}
 	if ($save) {
-		$path = dirname(__FILE__) . '/cook.txt';
+		$path = dirname(__FILE__) . '/../runtime/cookie/'.$save.'.txt';
 		if (file_exists($path)) {
 			unlink($path);
 		}
@@ -123,8 +123,8 @@ function https_post1($url = '', $data = [], $ssl = false, $header = null, $save 
 
 }
 
-function get_cookie($website_url) {
-	$cookie_file = dirname(__FILE__) . '/cookie.txt';
+function get_cookie($website_url, $filename = '') {
+	$cookie_file = dirname(__FILE__) . '/../runtime/cookie/'.$filename;
 	if (file_exists($cookie_file)) {
 		unlink($cookie_file);
 	}
@@ -137,7 +137,7 @@ function get_cookie($website_url) {
 	curl_setopt($ch, CURLOPT_COOKIEJAR, $cookie_file); //存储cookies
 	global $cookie_file;
 	if ($cookie_file) {
-		$path = dirname(__FILE__) . '/cook.txt';
+		$path = dirname(__FILE__) . '/../runtime/cookie/'.$filename.'.txt';
 		curl_setopt($ch, CURLOPT_COOKIEFILE, $path);
 	}
 	$results = curl_exec($ch);
@@ -186,8 +186,11 @@ function get_Notification_Counts($cookie_info, $userinfo, $timeout = 60) {
 	}
 }
 
-function get_file_cookie() {
-	$file = dirname(__FILE__) . '/cook.txt';
+function get_file_cookie($filename = '') {
+	$file = dirname(__FILE__) . '/../runtime/cookie/'.$filename.'txt';
+	if ($filename) {
+        $file = dirname(__FILE__) . '/../runtime/cookie/'.$filename.'.txt';
+    }
 	$info = file_get_contents($file);
 	$info = json_encode($info);
 	$info = explode('\n', $info);
@@ -208,7 +211,8 @@ function get_file_cookie() {
 function get_cookie_info($field = '') {
     if (!$field)
         return false;
-	global $cookie_info;
+	//global $cookie_info;
+	$cookie_info = $_SESSION[session_id()]['steamBot'];
 	$cookie = explode('; ', $cookie_info);
 	$len = strlen($field);
 	$value = '';
@@ -319,7 +323,7 @@ function get_return_date($http_code = 200, $msg = '') {
 	}
 	$return = [
 		'code' => $http_code,
-		//'error' => get_http_status_message($http_code),
+		'success' => 'true',
 		'msg' => $msg,
 	];
 	return $return;
@@ -343,7 +347,7 @@ function get_error_return($http_code = 422, $resource = null, $field = null, $co
 			"field" => $field, //字段
 
 			/**
-			 * code表示错误类型
+			 * code表示错误类型:
 			 * invalid  某个字段的值非法，接口文档中会提供相应的信息
 			 * required 缺失某个必须的字段
 			 * not_exist 说明某个字段的值代表的资源不存在

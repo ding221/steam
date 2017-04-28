@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BoT</title>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="./css/bootstrap.css"  crossorigin="anonymous">
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="./css/bootstrap-theme.css"  crossorigin="anonymous">
+    <script src="./js/jquery-3.1.0.js"></script>
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="./js/bootstrap.min.js"crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="panel panel-info">
+    <div class="panel-heading">
+        <h3 class="panel-title">Login In</h3>
+    </div>
+    <div class="panel-body">
+        <form class="form-horizontal" role="form" method="POST" action="{{ url('/d/post') }}">
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label for="username" class="col-md-2 control-label">
+                            Username
+                        </label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" name="username" autofocus id="username">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label for="password" class="col-md-2 control-label">
+                            Password
+                        </label>
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" name="password" autofocus id="password">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="form-group">
+                        <label for="twofactorcode" class="col-md-2 control-label">
+                            Twofactorcode
+                        </label>
+                        <div class="col-md-2">
+                            <input type="text" class="form-control" name="twofactorcode" autofocus id="twofactorcode">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="form-group">
+                    <div class="col-md-10 col-md-offset-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fa fa-disk-o"></i>
+                            Login
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+<!--<script src='./js/socket.io.js'></script>-->
+<script src="./js/socket.io.js"></script>
+<!--<script src='./js/web_socket.js'></script>-->
+<script>
+  var socket=io.connect('localhost:8686');//与服务器进行连接
+
+</script>
+</html>

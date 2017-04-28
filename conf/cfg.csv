@@ -6,3 +6,5 @@ email_host,imap.qq.com
 port,993
 ssl,true
 stmp_type,imap
+apikey,4EE9D7C1FACC1939D150662C845CF70D
+twofactorcode,1

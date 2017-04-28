@@ -151,7 +151,7 @@ class Steam_back {
 		$currency = isset($currency) && $currency != '' ? $currency : self::$currency;
 		$language = isset($language) && $language != '' ? $language : self::$language;
 		//$url = 'http://steamcommunity.com/market/popular?country=CN&language=schinese&currency=23&count=20';
-		return $url = 'http://steamcommunity.com/market/popular?country=' . self::country
+		return $url = 'http://steamcommunity.com/market/popular?country=' . self::$country
 		. '&language=' . self::$language
 		. '&currency=' . self::$currency
 			. '&count=' . $count;
@@ -268,8 +268,8 @@ class Steam_back {
 	//"5":0,
 	//"6":0,
 	//"8":0,
-	//"9":0,
-	//"1":1, //有一条新的交易通知
+	//"9":1, //1条未读聊天信息
+	//"1":1, //有1条新的交易通知
 	//"2":0,
 	//"3":0,
 	//"10":0,
